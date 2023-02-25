@@ -1,7 +1,7 @@
-import numpy as np
 import random
-import scipy.stats as ss
 
+import numpy as np
+import scipy.stats as ss
 
 __all__ = ['rand_rep']
 
@@ -46,3 +46,25 @@ def normal_dist_int(l, h, n, sigma):
     prob = prob / prob.sum()
     nums = np.random.choice(lengths, size = n, p = prob)
     return nums
+
+
+from numpy import random
+
+AA = ['A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'Y']
+
+
+def generate_aa(l):
+    """
+    Generate random amino acids sequence.
+    """
+    aa = "".join(random.choice(AA, size=l))
+    return aa
+
+
+def sequence_generator(n, min_len=6, max_len=17):
+    """
+    Generate random N amino acids sequences with random length.
+    """
+    lengths = random.choice(range(min_len, max_len + 1), size=n)
+    sequences = [generate_aa(l) for l in lengths]
+    return sequences

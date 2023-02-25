@@ -1,5 +1,6 @@
-from itertools import combinations, count
-from more_itertools import flatten, chunked, prepend
+from itertools import *
+
+from more_itertools import *
 
 '''
 Create a substring for each string in the input collection
@@ -19,7 +20,7 @@ def subsequence(seq):
 
 def sub_and_sequence(seq):
     '''Return iterable of tuples L-1 length sub-strings and string's tuple.'''
-    return prepend(tuple(seq), subsequence(seq))
+    return prepend(tuple(seq), combinations(seq, len(seq)-1))
 
 def hash_subsequences(subs):
     '''
@@ -39,19 +40,23 @@ def hash_key_gen(sequence_list, subsequences_only=False, chunk_size=None):
     return chunked(flatten(hash_ss), chunk_size)
 
 
-from itertools import combinations, starmap
-from operator import add
-from more_itertools import flatten
 
-def subsequence(seq):
-    '''Return L-1 length subsequences of the input string.'''
-    return combinations(seq, len(seq)-1)
-def subseq_hash(seq):
-    '''Return hashed sub-sequenceces of the input string, each pair with its index.'''
-    return map(hash, subsequence(seq))
-def indexed_hash(seq):
-    '''return an iterable of every sub-sequence's hash value summed with its index of creation order'''
-    return starmap(add, enumerate(subseq_hash(seq)))
-def indexed_hash_iter(sequence_list):
-    '''return list of long integers of hash values summed with the subsequence's index'''
-    return flatten(map(indexed_hash, sequence_list))
+def subsequence_generator(sequence):
+    """
+    Find subsequences with the length of the sequences minus one.
+    """
+    for i in range(len(sequence)):
+        yield subsequence(sequence, i)
+
+
+
+
+def subsequence_hash(sequence):
+    for skip in range(len(sequence)):
+        yield hash(tuple(aa for i, aa in enumerate(sequence) if i != skip)), skip
+
+
+def hash_sequences(sequences):
+    return np.vstack([np.array((ss_hash, skip_pos, seq_i))
+                      for seq_i, seq in enumerate(sequences)
+                      for ss_hash, skip_pos in subsequence_hash(seq)])

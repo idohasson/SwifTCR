@@ -1,11 +1,39 @@
-from itertools import chain, combinations, count, filterfalse, repeat
+import random
+import time
+from collections import defaultdict
+from itertools import chain, filterfalse
+from itertools import combinations, count, repeat
 from operator import itemgetter
 
 from more_itertools import all_equal, pairwise, prepend, split_when
 
-__all__ = ['find_clusters']
+
+# create wrapper for timing functions
+def timeit(func):
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        result = func(*args, **kwargs)
+        end = time.time()
+        print(f'{func.__name__} took {end - start:.3f} seconds')
+        return result
+
+    return wrapper
 
 
+def apply_combinations_dict(d, seq):
+    return chain.from_iterable(d.get(y, set()) for y in combinations(seq, len(seq) - 1))
+
+
+@timeit
+def create_combinations_dict(sequences):
+    d = defaultdict(set)
+    for x, seq in enumerate(sequences):
+        for y, z in zip(combinations(seq, len(seq) - 1), zip(count(), repeat(x))):
+            d[y].add(z)
+    return d
+
+
+@timeit
 def hamming(sequence_list):
     '''
     Given a list of sequences, return a list of sets of sequences that are all identical except for one character.
@@ -30,6 +58,7 @@ def hamming(sequence_list):
     return hash_groups
 
 
+@timeit
 def levenshtein(sequence_list):
     '''
     Given a list of sequences, return a list of sets of sequences that are all identical except for one character.
@@ -61,6 +90,7 @@ def levenshtein(sequence_list):
     return hash_groups
 
 
+@timeit
 def demarlio_levenshtein(sequence_list):
     '''
     Given a list of sequences, return a list of sets of sequences that are all identical except for one character.
@@ -99,35 +129,12 @@ def demarlio_levenshtein(sequence_list):
     return hash_groups
 
 
-# ---------------------------- Cluster ---------------------------- #
-
-def find_clusters(sequence_list, dist_type="hamming", edge_list=False):
-    '''
-    The function find_clusters takes a list of sequences and a distance function.
-    It returns a list of clusters, where each cluster is a list of sequences.
-
-    Args:
-    sequence_list: a list of sequences
-    dist_type: The distance function to use.
-    edge_list: If True, the function will return a list of edges. If False, it will return a list of nodes.
-    Returns:
-    A list of lists. Each list is a cluster of sequences.
-    '''
-
-    if dist_type == "hamming":
-        dist_func = hamming
-    elif dist_type == "levenshtein":
-        dist_func = levenshtein
-    elif dist_type == "demarlio-levenshtein":
-        dist_func = demarlio_levenshtein
-    else:
-        return
-
-    clusters = dist_func(sequence_list)
-    return list(clusters)
-
-
-
-
-
-
+# test runtimes
+sequences = [''.join(random.choices('ACGT', k=10)) for _ in range(100000)]
+d = create_combinations_dict(sequences)
+# ---------------------------- #
+c1 = hamming(sequences)
+# ---------------------------- #
+c2 = levenshtein(sequences)
+# ---------------------------- #
+c3 = demarlio_levenshtein(sequences)
