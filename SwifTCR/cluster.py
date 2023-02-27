@@ -1,9 +1,130 @@
-from itertools import chain, combinations, count, filterfalse, repeat
-from operator import itemgetter
-
+from itertools import combinations, chain, count, repeat, filterfalse
 from more_itertools import all_equal, pairwise, prepend, split_when
+from collections import defaultdict
+from operator import itemgetter
+from functools import partial
+import numpy as np
 
 __all__ = ['find_clusters']
+
+
+# def find_matching_sequences(sequences):
+#     subseq_to_seqs = defaultdict(set)
+#     for seq in sequences:
+#         for l in range(1, len(seq)):
+#             for subseq in combinations(seq, l):
+#                 subseq_to_seqs[''.join(sorted(subseq))].add(seq)
+#
+#     matching_seqs = [list(seq_set) for seq_set in subseq_to_seqs.values() if len(seq_set) > 1]
+#     return matching_seqs
+
+
+def get_hashes(sequence_list, prepend_sequence=False):
+
+    if prepend_sequence:
+        hash_sub_fn = partial(hash_subsequence, prepend_sequence=True)
+    else:
+        hash_sub_fn = hash_subsequence
+
+    hashes = chain(*map(hash_sub_fn, sequence_list))
+
+    return hashes
+
+
+
+def group_sequences(sequence_list, prepend_sequence=False):
+
+    hash_iterable = get_hashes(sequence_list, prepend_sequence=prepend_sequence)
+
+    hash_arr = np.fromiter(hash_iterable, dtype=[('hash', 'i8'), ('pos', 'i8')])
+
+    sorted_indices = np.lexsort((hash_arr['pos'], hash_arr['hash']))
+
+    hash_groups = split_when(sorted_indices, lambda s1, s2: s1[0] != s2[0])
+
+    return hash_groups
+
+
+# def group_hashes(hashes):
+#
+#     hash_groups = split_when(hashes, lambda s1, s2: s1[0] != s2[0])
+#
+#     return hash_groups
+
+
+# def filter_groups(hash_groups):
+#
+#     hash_groups = filterfalse(lambda g: len(g) == 1, hash_groups)
+#
+#     return hash_groups
+
+
+def find_matching_sequences(sequences):
+    subseq_to_seqs = defaultdict(set)
+    for seq in sequences:
+        for l in range(1, len(seq)):
+            for subseq in combinations(seq, l):
+                subseq_to_seqs[''.join(sorted(subseq))].add(seq)
+
+    matching_seqs = [list(seq_set) for seq_set in subseq_to_seqs.values() if len(seq_set) > 1]
+    return matching_seqs
+
+
+def hash_subsequence(sequence, prepend_sequence=False):
+    sub = combinations(sequence, len(sequence) - 1)
+
+    if prepend_sequence:
+
+        sub = prepend(tuple(sequence), sub)
+
+        return zip(count(-1), map(hash, sub))
+
+    else:
+
+        return zip(count(), map(hash, sub))
+
+
+# def get_hashes(sequence_list, prepend_sequence=False):
+#     if prepend_sequence:
+#         hash_sub_fn = partial(hash_subsequence, prepend_sequence=True)
+#     else:
+#         hash_sub_fn = hash_subsequence
+#     hashes = chain(*map(hash_sub_fn, sequence_list))
+#     return hashes
+
+
+def sort_hash(hash_iterable):
+
+    hash_arr = np.fromiter(hash_iterable, dtype=[('hash', 'i8'), ('pos', 'i8')])
+
+    sorted_indices = np.lexsort((hash_arr['pos'], hash_arr['hash']))
+
+    return sorted_indices
+
+
+def group_sequences(sequence_list, prepend_sequence=False):
+
+    hashes = get_hashes(sequence_list, prepend_sequence=prepend_sequence)
+
+    sorted_indices = sort_hash(hashes)
+
+    hash_groups = split_when(sorted_indices, lambda s1, s2: s1[0] != s2[0])
+
+    return hash_groups
+
+
+# def group_hashes(hashes):
+#
+#     hash_groups = split_when(hashes, lambda s1, s2: s1[0] != s2[0])
+#
+#     return hash_groups
+
+
+# def filter_groups(hash_groups):
+#
+#     hash_groups = filterfalse(lambda g: len(g) == 1, hash_groups)
+#
+#     return hash_groups
 
 
 def hamming(sequence_list):
@@ -99,8 +220,6 @@ def demarlio_levenshtein(sequence_list):
     return hash_groups
 
 
-# ---------------------------- Cluster ---------------------------- #
-
 def find_clusters(sequence_list, dist_type="hamming", edge_list=False):
     '''
     The function find_clusters takes a list of sequences and a distance function.
@@ -125,9 +244,3 @@ def find_clusters(sequence_list, dist_type="hamming", edge_list=False):
 
     clusters = dist_func(sequence_list)
     return list(clusters)
-
-
-
-
-
-

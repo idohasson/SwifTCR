@@ -36,6 +36,23 @@ def prepare_cdr3(cdr3_lists, min_len=2, max_len=None):
 
 # ---------------------------- I/O ----------------------------
 
+def read_set_from_file(filename):
+    """
+    Extract a de-duped collection (set) of text from a file.
+    Expected file format is one item per line.
+    """
+    collection = set()
+    with open(filename, "r", encoding="utf-8") as file_:
+        for line in file_:
+            collection.add(line.rstrip())
+    return collection
+
+
+def get_file_extension(path, dot=True, lower=True):
+    ext = os.path.splitext(path)[1]
+    ext = ext if dot else ext[1:]
+    return ext.lower() if lower else ext
+
 def search_path(path):
     # check if path exists
     if not os.path.exists(path):
@@ -82,7 +99,7 @@ def read_mixcr_cdr3(input_path, get_column='aaSeqCDR3', delim='\t'):
 
 import os
 
-import pandas as pd
+
 
 
 def search_path(path):

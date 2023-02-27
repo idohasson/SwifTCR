@@ -4,7 +4,6 @@ from collections import defaultdict
 from itertools import chain, filterfalse
 from itertools import combinations, count, repeat
 from operator import itemgetter
-
 from more_itertools import all_equal, pairwise, prepend, split_when
 
 

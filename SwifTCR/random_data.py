@@ -1,6 +1,4 @@
 import random
-
-import numpy as np
 import scipy.stats as ss
 
 __all__ = ['rand_rep']
@@ -29,26 +27,22 @@ def rand_rep(seq_n, min_len=8, max_len=18, char_n=20, alphabet='ACDEFGHIKLMNPQRS
     list
         Strings of amino acid sequences
     '''
-    if isinstance(char_n, int):
-        alphabet = alphabet[:char_n]
-        
-    sequence_lengths = normal_dist_int(min_len, max_len, seq_n, 2)
-    return ["".join(random.choices(alphabet, k=seq_size)) for seq_size in sequence_lengths]
-
+    # generate random lengths
+    lengths = normal_dist_int(min_len, max_len, seq_n, 2)
+    # generate random sequences
+    sequences = [''.join(random.choices(alphabet, k=length)) for length in lengths]
+    return sequences
 
 def normal_dist_int(l, h, n, sigma):
+    """
+    Return a list of length n of random integers from the normal distribution
+    with mean and standard deviation as the mean of l and h and sigma,
+    respectively. The values are clipped to be between l and h.
+    """
+    mean = (l + h) / 2
+    std = (h - l) / (2 * sigma)
+    return ss.truncnorm((l - mean) / std, (h - mean) / std, loc=mean, scale=std).rvs(n).astype(int)
 
-    lengths = np.arange(l,h+1)
-    d = lengths.size / 2
-    x = np.arange(-d,d, 1) 
-    xU, xL = x + 1, x
-    prob = ss.norm.cdf(xU, scale = sigma) - ss.norm.cdf(xL, scale = sigma)
-    prob = prob / prob.sum()
-    nums = np.random.choice(lengths, size = n, p = prob)
-    return nums
-
-
-from numpy import random
 
 AA = ['A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'Y']
 
@@ -68,3 +62,18 @@ def sequence_generator(n, min_len=6, max_len=17):
     lengths = random.choice(range(min_len, max_len + 1), size=n)
     sequences = [generate_aa(l) for l in lengths]
     return sequences
+
+# import random
+# x = sequence_generator(1000, min_len=10, max_len=15)
+# # print()
+# # for each sequence in mutated_sequences, randomly mutate by replacing a 1 random other character with a random character
+# AA = ['A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'Y']
+# mutated_sequences = random.sample(x, len(x) // 10)
+# for seq in mutated_sequences:
+#     i = random.randint(0, len(seq) - 1)
+#     aa = seq[i]
+#     replaced = set(AA)
+#     replaced.remove(aa)
+#     mutated = seq[:i] + random.choice(list(replaced)) + seq[i + 1:]
+#     x.append(mutated)
+# random.shuffle(x)
