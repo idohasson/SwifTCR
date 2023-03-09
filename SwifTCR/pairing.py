@@ -1,6 +1,5 @@
 import operator
 from itertools import starmap
-
 from more_itertools import pairwise
 
 
