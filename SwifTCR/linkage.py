@@ -1,6 +1,6 @@
 from itertools import combinations, chain
 
-from SwifTCR.pairing import is_valid_pairing
+# from SwifTCR.pairing import is_valid_pairing
 
 
 def get_skip_links(clusters, valid_func):
