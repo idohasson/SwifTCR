@@ -1,7 +1,57 @@
 import operator
-from itertools import starmap
+from itertools import starmap, tee, islice
+from more_itertools import pairwise, exactly_n, quantify, locate, zip_offset
 
-from more_itertools import pairwise
+
+def n_substitutions(seq1, seq2, n=1):
+    """
+    Returns the number of substitutions between two sequences.
+    :param seq1: first sequence
+    :param seq2: second sequence
+    :return: number of substitutions between the sequences
+    """
+
+    if len(seq1) != len(seq2):
+        raise ValueError('Sequences must be of the same length.')
+
+    return exactly_n(zip(seq1, seq2), n=n, predicate=lambda x: x[0] != x[1])
+
+
+def n_deletions(seq1, seq2, n=1):
+    """
+    Returns the number of deletions between two sequences.
+    :param seq1: first sequence
+    :param seq2: second sequence
+    :return: number of deletions between the sequences
+    """
+
+    return abs(len(seq1) - len(seq2)) == n
+
+def n_transpositions(seq1, seq2, n=1):
+
+    if len(seq1) != len(seq2):
+        raise ValueError('Sequences must be of the same length.')
+    silice = islice(1, None)
+    diff, cross = tee(zip(seq1, seq2))
+
+    adjacent_pairs = starmap(operator.ne, diff)
+    adjacent_crossing = starmap(lambda x, y: operator.eq(x[1], y[0]) and operator.eq(x[0], y[1]), pairwise(cross))
+
+    cross_match = map(operator.and_, adjacent_pairs, adjacent_crossing)
+    return quantify(cross_match) <= n
+
+def n_transpositions(seq1, seq2, n=1):
+
+    if len(seq1) != len(seq2):
+        raise ValueError('Sequences must be of the same length.')
+
+    unmatch_pairs = locate(zip(seq1, seq2), lambda x: operator.ne(*x))
+
+    # adjacent_pairs = ((aa11 != aa21 and aa12 != aa22) and (aa11 == aa22 and aa12 == aa21) for
+    #            (aa11, aa12), (aa21, aa22) in pairwise(zip(seq1, seq2)))
+
+    return unmatch_pairs
+
 
 def is_hamming_distance_one(seq1, seq2):
     """
@@ -11,6 +61,7 @@ def is_hamming_distance_one(seq1, seq2):
     :return: boolean indicating if the Hamming distance between the sequences is 1
     """
     return sum(starmap(operator.ne, zip(seq1, seq2))) == 1
+
 
 def is_levenstein_distance_one(seq1, seq2):
     """
@@ -38,7 +89,6 @@ def is_damerau_distance_one(seq1, seq2):
 
     return sum((aa11 != aa21 and aa12 != aa22) and (aa11 == aa22 and aa12 == aa21) for
                (aa11, aa12), (aa21, aa22) in pairwise(zip(seq1, seq2))) == 1
-
 
 #
 # def is_valid_pairing(substitution=True, deletion=True, transposition=True):
@@ -73,6 +123,3 @@ def is_damerau_distance_one(seq1, seq2):
 #         # Return a function that checks if two sequences are valid pairings
 #
 #     return lambda x: any(f(x) for f in selected_filters)
-
-
-
