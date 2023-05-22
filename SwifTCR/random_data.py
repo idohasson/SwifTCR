@@ -1,19 +1,18 @@
-import random
-from itertools import filterfalse
+from itertools import filterfalse, compress
 
+import numpy as np
 import scipy.stats as ss
 from scipy.stats import norm
 
 __all__ = ['rand_rep']
 
 from more_itertools import random_combination
-
-import random
-from math import exp, sqrt, pi
-
+from functools import partial
 import random
 import math
 
+AA = list('ACDEFGHIKLMNPQRSTVWY')
+NT = list('ACGT')
 
 def rand_rep(seq_n, min_len=8, max_len=18, char_n=20, alphabet='ACDEFGHIKLMNPQRSTVWY'):
     '''
@@ -40,52 +39,32 @@ def rand_rep(seq_n, min_len=8, max_len=18, char_n=20, alphabet='ACDEFGHIKLMNPQRS
     '''
     if isinstance(char_n, int):
         alphabet = alphabet[:char_n]
-        
+
     sequence_lengths = normal_dist_int(min_len, max_len, seq_n, 2)
     return ["".join(random.choices(alphabet, k=seq_size)) for seq_size in sequence_lengths]
 
 
 def normal_dist_int(l, h, n, sigma):
-
-    lengths = np.arange(l,h+1)
+    lengths = np.arange(l, h + 1)
     d = lengths.size / 2
-    x = np.arange(-d,d, 1) 
+    x = np.arange(-d, d, 1)
     xU, xL = x + 1, x
-    prob = ss.norm.cdf(xU, scale = sigma) - ss.norm.cdf(xL, scale = sigma)
+    prob = ss.norm.cdf(xU, scale=sigma) - ss.norm.cdf(xL, scale=sigma)
     prob = prob / prob.sum()
-    nums = np.random.choice(lengths, size = n, p = prob)
+    nums = np.random.choice(lengths, size=n, p=prob)
     return nums
 
 
 def normal_dist_choices(values, k, sigma=1):
     n = len(values)
     mu = (n - 1) / 2  # Mean index of the values list
-    weights = [math.exp(-(i - mu)**2 / (2*sigma**2)) for i in range(n)]
+    weights = [math.exp(-(i - mu) ** 2 / (2 * sigma ** 2)) for i in range(n)]
     counts = [math.ceil(w * k) for w in weights]
     indices = random.sample(range(n), k=k, counts=counts)
     return [values[i] for i in indices]
 
-values = [1, 2, 3, 4, 5]
-indices = normal_dist_choices(values, k=3, sigma=1)
-print(indices)  # e.g. [2, 4, 1]
 
 
-
-values = [1, 2, 3, 4, 5]
-result = normal_dist_choices(values, 3)
-print(result)
-
-
-
-def normal_dist_int(l, h, n, sigma=2):
-    """
-    Return a list of length n of random integers from the normal distribution
-    with mean and standard deviation as the mean of l and h and sigma,
-    respectively. The values are clipped to be between l and h.
-    """
-    mean = (l + h) / 2
-    std = (h - l) / (2 * sigma)
-    return ss.truncnorm((l - mean) / std, (h - mean) / std, loc=mean, scale=std).rvs(n).astype(int)
 
 def rand_rep(seq_n, min_len=8, max_len=18, char_n=20, alphabet='ACDEFGHIKLMNPQRSTVWY'):
     '''
@@ -114,23 +93,23 @@ def rand_rep(seq_n, min_len=8, max_len=18, char_n=20, alphabet='ACDEFGHIKLMNPQRS
     # # generate random lengths
     # mean = (min_len + max_len) / 2
     # std = (max_len - min_len) / (2 * sigma)
+    # # generate random sequences
     # lengths = ss.truncnorm((min_len - mean) / std, (max_len - mean) / std, loc=mean, scale=std).rvs(seq_n).astype(int)
     # lengths = normal_dist_int(min_len, max_len, seq_n)
-    # generate random sequences
-    # lengths = random.choices(list(range(min_len, max_len + 1)), weights=list(norm()) , k=seq_n)
+    lengths = random.choices(list(range(min_len, max_len + 1)), weights=list(norm()), k=seq_n)
     sequences = [''.join(random.choices(alphabet, k=length)) for length in lengths]
     # Ensure that the data have pairwise 1 edit distance of all kinds
     # and some more with more than 1 edit distance.
     mutation = {
         'hamming': lambda seq, pos, aa: seq[:pos] + aa + seq[pos + 1:],
-        'levenstein': lambda seq, pos, aa: random_combination(seq, len(seq)-1),
-        'levenstein-del': lambda seq, pos, aa: random_combination(seq, len(seq)-1),
+        'levenstein': lambda seq, pos, aa: random_combination(seq, len(seq) - 1),
+        'levenstein-del': lambda seq, pos, aa: random_combination(seq, len(seq) - 1),
         'levenstein-insert': lambda seq, pos, aa: seq[:pos] + aa + seq[pos:],
-        'damerau': lambda seq, pos, aa: seq[:pos] + seq[pos+1] + seq[pos] + seq[pos + 2:],
+        'damerau': lambda seq, pos, aa: seq[:pos] + seq[pos + 1] + seq[pos] + seq[pos + 2:],
     }
 
     mutated_sequences = []
-    for seq in random.choices(list(filter(lambda x: len(x) > 1, sequences)), k=len(sequences)//10):
+    for seq in random.choices(list(filter(lambda x: len(x) > 1, sequences)), k=len(sequences) // 10):
         mutation_type = random.choice(['hamming', 'levenstein-del', 'levenstein-insert', 'damerau'])
         if mutation_type == 'damerau':
             pos = random.randint(0, len(seq) - 2)
@@ -156,27 +135,60 @@ def rand_rep(seq_n, min_len=8, max_len=18, char_n=20, alphabet='ACDEFGHIKLMNPQRS
     return sequences
 
 
-
-
-
-# AA = ['A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'Y']
-
-
-def generate_aa(l):
+def random_aa_seq(seq_size):
     """
     Generate random amino acids sequence.
     """
-    aa = "".join(random.choice(AA, size=l))
-    return aa
+
+    return "".join(random.choices(population=('A', 'C', 'D', 'E', 'F',
+                                              'G', 'H', 'I', 'K', 'L',
+                                              'M', 'N', 'P', 'Q', 'R',
+                                              'S', 'T', 'V', 'W', 'Y'),
+                                  k=seq_size))
 
 
-def sequence_generator(n, min_len=6, max_len=17):
+import random
+from itertools import chain
+
+
+def apply_mutation(seq, mutation_type, alphabet='ACDEFGHIKLMNPQRSTVWY'):
+    """
+    Apply a random mutation of a given type to a sequence and return the original and mutated sequences.
+    """
+    i = random.randint(0, len(seq) - 1)
+    original_seq = seq
+
+    yield original_seq
+
+    if mutation_type == 'substitution':
+        mutation = random.choice(list(set(alphabet) - {seq[i]}))
+        mutated_seq = ''.join(chain(seq[:i], mutation, seq[i + 1:]))
+    elif mutation_type == 'deletion':
+        mutated_seq = ''.join(chain(seq[:i], seq[i + 1:]))
+    elif mutation_type == 'insertion':
+        mutation = random.choice(alphabet)
+        mutated_seq = ''.join(chain(seq[:i], mutation, seq[i:]))
+    elif mutation_type == 'transposition':
+        j = random.randint(0, len(seq) - 1)
+        mutated_seq = ''.join(chain(seq[:i], seq[j], seq[i + 1:j], seq[i], seq[j + 1:]))
+    else:
+        raise ValueError('Invalid mutation type.')
+
+    yield mutated_seq
+
+
+
+def sequence_generator(seq_num, min_len=1, max_len=5):
     """
     Generate random N amino acids sequences with random length.
     """
-    lengths = random.choice(range(min_len, max_len + 1), size=n)
-    sequences = [generate_aa(l) for l in lengths]
-    return sequences
+    # generate random lengths at normal distribution range of min_len and max_len (inclusive)
+    lengths = random.choices(range(min_len, max_len + 1), k=seq_num)
+    # generate random sequences with random lengths
+    sequences = map(random_aa_seq, lengths)
+
+    for seq in sequences:
+        yield seq
 
 # import random
 # x = sequence_generator(1000, min_len=10, max_len=15)
