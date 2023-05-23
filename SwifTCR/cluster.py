@@ -1,3 +1,4 @@
+from collections import defaultdict
 from itertools import chain, combinations, count, filterfalse, repeat
 from operator import itemgetter
 
@@ -123,3 +124,27 @@ def find_clusters(sequence_list, dist_type="hamming", edge_list=False):
 
     clusters = dist_func(sequence_list)
     return list(clusters)
+
+
+def get_skip_groups(sequences, zero_deletion=True):
+    """
+    Returns a list of clusters of sequences with a single deletion or no deletion.
+    :param sequences: list of strings, the sequences to cluster
+    :param zero_deletion: boolean, whether to include clusters of sequences with no deletion
+    :return: list of lists of strings, the clusters of sequences
+    """
+    # Create a defaultdict to store the clusters
+    cluster_dict = defaultdict(list)
+
+    # For each sequence:
+    for seq in sequences:
+        # Create a subsequence by removing one residue at a time,
+        for subseq in combinations(seq, len(seq) - 1):
+            # Add the original sequence to the cluster corresponding to that subsequence
+            cluster_dict[''.join(subseq)].append(seq)
+        # If zero_deletion is True, also add the original sequence to its own cluster
+        if zero_deletion:
+            cluster_dict[seq].append(seq)
+
+    # Return the list of clusters
+    return cluster_dict.values()

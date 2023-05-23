@@ -1,7 +1,7 @@
 import numpy as np
+from operator import getitem, itemgetter
 import pandas as pd
 from itertools import combinations, count, groupby, repeat, starmap
-from operator import getitem, itemgetter
 from more_itertools import unique_justseen
 from memprof import memprof
 
@@ -38,9 +38,9 @@ def levenshtein_cluster(sequences):
             gap = min(set.union(*cluster), key=len)
             for i in range(len(cluster)): cluster[i].add(gap)
 
-        clusters += [c for c in cluster if len(c) > 1]
+        clusters += [tuple(sorted(e)) for c in cluster if len(c) > 1 for e in combinations(c, 2)]
 
-    return clusters
+    return set(clusters)
 
 
 def hash_subsequence(sequences, skip):
