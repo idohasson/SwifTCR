@@ -1,9 +1,8 @@
-import pandas as pd
 
 from SwifTCR.clustering import get_clusters
 from SwifTCR.linkage import get_edges
 
-
+import pandas as pd
 def get_cluster_dataframe(sequences, method='lev'):
     """
     Returns a Pandas DataFrame representing the clusters of sequences using the specified clustering method.
@@ -55,7 +54,7 @@ def get_edge_dataframe(sequences, method='lev'):
     :return: Pandas DataFrame, the valid edges between sequences that are distance 1 apart from each other
     """
     # Get the valid edges between sequences that are distance 1 apart from each other using the specified distance metric
-    edges = list(get_edges(sequences, method))
+    edges = get_edges(sequences, method)
 
     # Convert the edges to a Pandas DataFrame
     edge_df = pd.DataFrame(edges, columns=['seq1', 'seq2'])

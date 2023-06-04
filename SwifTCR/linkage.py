@@ -1,6 +1,5 @@
+from more_itertools import unique_everseen
 from itertools import combinations, chain
-
-from SwifTCR.pairing import is_valid_pairing
 
 
 def get_skip_links(clusters, valid_func):
@@ -22,9 +21,9 @@ def get_skip_links(clusters, valid_func):
     # Get the valid edges for each cluster and combine them into a single iterator
     valid_edges = map(filter_func, clusters)
     edges_found = chain.from_iterable(valid_edges)
-
+    unique_edges = unique_everseen(edges_found)
     # Return the iterator of valid edges
-    return edges_found
+    return unique_edges
 
 
 def get_edges(clusters, method='lev'):
@@ -38,17 +37,12 @@ def get_edges(clusters, method='lev'):
     assert method in ['hamming', 'lev', 'damerau']
 
     # Define the distance metric function for each method
-    dist_method = {
-        'hamming': is_valid_pairing(substitution=True, deletion=False, transposition=False),
-        'lev': is_valid_pairing(substitution=True, deletion=True, transposition=False),
-        'damerau': is_valid_pairing(substitution=True, deletion=True, transposition=True)
-    }
+    dist_method = {'hamming': lambda x, y: sum(a != b for a, b in zip(x, y)),
+                   'lev': lambda x, y: sum(a != b for a, b in zip(x, y)),
+                   'damerau': lambda x, y: sum(a != b for a, b in zip(x, y))}
 
     # Select the appropriate distance metric function based on the specified method
-    valid_func = dist_method[method]
-
     # Get the valid edges for the clusters using the selected distance metric function
-    edges = get_skip_links(clusters, valid_func)
-
+    edges = get_skip_links(clusters, dist_method[method])
     # Return the iterator of valid edges
-    return edges
+    return list(edges)
