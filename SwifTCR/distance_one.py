@@ -37,5 +37,3 @@ def get_distance_one_edges(sequences, method='lev'):
     # Return the generator of valid edges
     return edges
 
-x=get_distance_one_edges(['AAAA', 'AAAT', 'AAAC', 'AAAG', 'AATT', 'AATC', 'AATG', 'AACC', 'AACG', 'AAGG', 'ATTT', 'ATTC', 'ATTG', 'ATCC', 'ATCG', 'ATGG', 'ACCC', 'ACCG', 'ACGG', 'AGGG', 'TTTT', 'TTTC', 'TTTG', 'TTCC', 'TTCG', 'TTGG', 'TCCC', 'TCCG', 'TCGG', 'TGGG', 'CCCC', 'CCCG', 'CCGG', 'CGGG', 'GGGG'], method='lev')
-print(x)
