@@ -115,26 +115,26 @@ with open(cluster_file_path, 'w', newline='') as file:
     writer.writerows(clique_list)
 
 
-###########################################        Test        #####################################################
-# !!!!!!!!!! remove the last line in the main loop sequences.pop(current_length) or re-read the sequences !!!!!!!!!!
-####################################################################################################################
-from collections import Counter
-from Levenshtein import distance, editops
-from operator import eq
-gt = defaultdict(set)
-for sequence in set.union(*map(set, sequences.values())):
-    for ss in combinations(sequence, len(sequence) - 1):
-        gt[hash(ss)].add(sequence)
-    gt[hash(tuple(sequence))].add(sequence)
-gt = set(pair for v in filter(lambda v: len(v) > 1, gt.values())
-         for pair in combinations(sorted(v), 2)
-         if len(pair[0]) != len(pair[1]) or sum(1 for p in zip(*pair) if p[0] != p[1]) == 1)
-edge_list = set(map(tuple, map(sorted, edges_list)))
-print("Edges Test:", "Correct" if len(edges_list) == len(gt) and
-                                  len(edge_list) == len(gt) and
-                                  not gt - edge_list | edge_list - gt
-                                  and all(v == 1 for v in Counter(edges_list).values()) else "Incorrect")
-
-print("Clusters Test: ", "Correct" if all(distance(*pair) == 1 and eq(*editops(*pair)[0][1:])
-                                          for clique in clique_list for pair in
-                                          combinations(clique.split("|"), 2)) else "Incorrect")
+# ###########################################        Test        #####################################################
+# # !!!!!!!!!! remove the last line in the main loop sequences.pop(current_length) or re-read the sequences !!!!!!!!!!
+# ####################################################################################################################
+# from collections import Counter
+# from Levenshtein import distance, editops
+# from operator import eq
+# gt = defaultdict(set)
+# for sequence in set.union(*map(set, sequences.values())):
+#     for ss in combinations(sequence, len(sequence) - 1):
+#         gt[hash(ss)].add(sequence)
+#     gt[hash(tuple(sequence))].add(sequence)
+# gt = set(pair for v in filter(lambda v: len(v) > 1, gt.values())
+#          for pair in combinations(sorted(v), 2)
+#          if len(pair[0]) != len(pair[1]) or sum(1 for p in zip(*pair) if p[0] != p[1]) == 1)
+# edge_list = set(map(tuple, map(sorted, edges_list)))
+# print("Edges Test:", "Correct" if len(edges_list) == len(gt) and
+#                                   len(edge_list) == len(gt) and
+#                                   not gt - edge_list | edge_list - gt
+#                                   and all(v == 1 for v in Counter(edges_list).values()) else "Incorrect")
+#
+# print("Clusters Test: ", "Correct" if all(distance(*pair) == 1 and eq(*editops(*pair)[0][1:])
+#                                           for clique in clique_list for pair in
+#                                           combinations(clique.split("|"), 2)) else "Incorrect")
