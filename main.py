@@ -7,47 +7,46 @@ import pandas as pd
 import tqdm
 from more_itertools import map_reduce
 
-# Generate all (length-1) substrings of the current sequence and hash them
+
 def generate_hashed_substrings(sequence):
+    # Generate all (length-1) substrings of the current sequence and hash them
     for substring in combinations(sequence, len(sequence) - 1):
         yield hash(substring), sequence
 
 
-input_file_path = "./tcr.txt"  # Column name in the file to extract sequences from
-column_name = 'aaSeqCDR3'  # Delimiter used in the input file (e.g., ',' for comma-separated)
-default_delimiter = '\t'  # Output file to write the clustered sequences
-cluster_file_path = 'dist_one_clusters.csv'  # Output file to write the edge list
-edge_list_file_path = "dist_one_edge_list.csv"  # Header for the edge list CSV file
-edge_list_header = ['Seq1', 'Seq2']
+input_file_path = "./MiXCR_file_example.tsv"
+column_name = 'aaSeqCDR3'  # Column name in the file to extract sequences from
+default_delimiter = '\t'  # Delimiter used in the input file (e.g., ',' for comma-separated)
+cluster_file_path = 'dist_one_clusters_example.txt'  # Output file to write the clustered sequences
+edge_list_file_path = "dist_one_edge_list_example.csv"  # Output file to write the edge list
 
+# Read sequences from the input file
+with open(input_file_path) as f:
+    n_rows = sum(1 for line in f)
 
-# # Read sequences from the input file
-# with open(input_file_path) as f:
-#     n_rows = sum(1 for line in f)
-#
-# sequences = []
-# read_bar = tqdm.tqdm(total=n_rows, desc="Reading sequences")
-# for chunk in pd.read_csv(input_file_path, sep=default_delimiter, usecols=[column_name], chunksize=512):
-#     sequences.extend(chunk[column_name].to_list())
-#     read_bar.update(len(chunk))
-# read_bar.close()
-#
-# # Filter out invalid sequences (non-string or length <= 1)
-# valid_sequences = filter(lambda s: isinstance(s, str) and len(s) > 1, sequences)
-# # Group sequences by their lengths
-# sequences = map_reduce(valid_sequences, keyfunc=len, reducefunc=lambda x: tuple(set(x)))
+sequences = []
+read_bar = tqdm.tqdm(total=n_rows, desc="Reading sequences")
+for chunk in pd.read_csv(input_file_path, sep=default_delimiter, usecols=[column_name], chunksize=512):
+    sequences.extend(chunk[column_name].to_list())
+    read_bar.update(len(chunk))
+read_bar.close()
 
-# FOR TESTING
-import random  # Generate all (length-1) substrings of the current sequence
-sequences = map_reduce((''.join(random.choices('ACDEFGHIKLMNPQRSTVWY', k=l))
-                        for l in range(2, 6) for _ in range(10 ** l)),
-                       keyfunc=len, reducefunc=lambda x: tuple(set(x)))
+# Filter out invalid sequences (non-string or length <= 1)
+valid_sequences = filter(lambda s: isinstance(s, str) and len(s) > 1, sequences)
+# Group sequences by their lengths
+sequences = map_reduce(valid_sequences, keyfunc=len, reducefunc=lambda x: tuple(set(x)))
+
+# # RANDOM DATA FOR TESTING
+# import random  # Generate all (length-1) substrings of the current sequence
+# sequences = map_reduce((''.join(random.choices('ACDEFGHIKLMNPQRSTVWY', k=l))
+#                         for l in range(2, 6) for _ in range(10 ** l)),
+#                        keyfunc=len, reducefunc=lambda x: tuple(set(x)))
 
 
 # Write the header row for the edge list CSV file
 with open(edge_list_file_path, 'w', newline='') as file:
     writer = csv.writer(file)
-    writer.writerow(edge_list_header)
+    writer.writerow(['Seq1', 'Seq2'])
 
 write_edge_list_bar = tqdm.tqdm(total=sum(len(s) * l for l, s in sequences.items()), desc="Writing pairs")
 for current_length in sorted(sequences.keys(), reverse=True):
@@ -90,7 +89,7 @@ for current_length in sorted(sequences.keys(), reverse=True):
             writer.writerows(edge_list)
 
         write_edge_list_bar.update(len(sequences[current_length]))
-    sequences.pop(current_length)
+    sequences.pop(current_length)  # Remove THIS line for testing
 write_edge_list_bar.close()
 
 # Read the edge list from the CSV file
@@ -110,7 +109,7 @@ graph.add_edges_from(edges_list)
 clique_list = ("|".join(clique) for clique in nx.find_cliques(graph))
 # Write the edge list to a CSV file
 with open(cluster_file_path, 'w', newline='') as file:
-    for line in tqdm.tqdm(clique_list, desc="Writing clusters"):
+    for line in tqdm.tqdm(clique_list, desc="Writing clusters", total=nx.graph_number_of_cliques(graph)):
         file.write(line + '\n')
 
 
