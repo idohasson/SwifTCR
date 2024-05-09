@@ -56,7 +56,6 @@ for current_length in sorted(sequences.keys(), reverse=True):
     if current_length - 1 in sequences.keys():
         sequences_of_following_length = tuple(map(lambda s: hash(tuple(s)), sequences[current_length - 1]))
 
-    cluster_list = []
     for i in range(current_length - 1, -1, -1):
         # Create a dictionary to store sequences grouped by their hashed subsequences
         sequences_by_hashed_substrings = defaultdict(list)
@@ -82,8 +81,6 @@ for current_length in sorted(sequences.keys(), reverse=True):
             else:
                 group = sorted(group)
                 edge_list.extend(combinations(group, 2))
-
-            cluster_list.append('|'.join(sorted(group)))
 
         # Write the edge list to a CSV file
         with open(edge_list_file_path, 'a', newline='') as file:
